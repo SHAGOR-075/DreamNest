@@ -10,7 +10,10 @@ interface Booking {
     _id: string
     title: string
     price: number
-    location: string
+    district: string
+    thana: string
+    area: string
+    road: string
     images: string[]
     type: 'flat' | 'land'
   }
@@ -49,11 +52,9 @@ const MyBookingsPage: React.FC = () => {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   if (loading) {
@@ -114,7 +115,7 @@ const MyBookingsPage: React.FC = () => {
                         <div className="flex items-center space-x-4 text-sm text-secondary-600 dark:text-secondary-400 mb-3">
                           <span className="flex items-center space-x-1">
                             <i className="bi bi-geo-alt"></i>
-                            <span>{booking.propertyId.location}</span>
+                            <span>{booking.propertyId.district}, {booking.propertyId.thana}, {booking.propertyId.area}, {booking.propertyId.road}</span>
                           </span>
                           <span className="flex items-center space-x-1">
                             <i className="bi bi-tag"></i>

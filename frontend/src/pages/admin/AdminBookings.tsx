@@ -17,7 +17,10 @@ interface Booking {
     _id: string
     title: string
     price: number
-    location: string
+    district: string
+    thana: string
+    area: string
+    road: string
     images: string[]
     type: 'flat' | 'land'
   }
@@ -96,11 +99,9 @@ const AdminBookings: React.FC = () => {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   if (loading) {
@@ -184,14 +185,14 @@ const AdminBookings: React.FC = () => {
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
                               <i className="bi bi-geo-alt"></i>
-                              <span>{booking.propertyId.location}</span>
+                              <span>{booking.propertyId.district}, {booking.propertyId.thana}, {booking.propertyId.area}, {booking.propertyId.road}</span>
                             </div>
                             <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
                               <i className="bi bi-tag"></i>
                               <span>{booking.propertyId.type === 'flat' ? 'Apartment' : 'Land'}</span>
                             </div>
                             <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-currency-dollar"></i>
+                              <i className="bi bi-wallet2"></i>
                               <span>{formatPrice(booking.propertyId.price)}</span>
                             </div>
                           </div>
@@ -292,7 +293,7 @@ const AdminBookings: React.FC = () => {
                       {selectedBooking.propertyId.title}
                     </h3>
                     <p className="text-secondary-600 dark:text-secondary-400">
-                      {selectedBooking.propertyId.location}
+                      {selectedBooking.propertyId.district}, {selectedBooking.propertyId.thana}, {selectedBooking.propertyId.area}, {selectedBooking.propertyId.road}
                     </p>
                     <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                       {formatPrice(selectedBooking.propertyId.price)}

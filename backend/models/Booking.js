@@ -125,14 +125,14 @@ bookingSchema.virtual('responseTime').get(function() {
 bookingSchema.statics.findPending = function() {
   return this.find({ status: 'Pending' })
     .populate('userId', 'name email phone')
-    .populate('propertyId', 'title price location images')
+    .populate('propertyId', 'title price district thana area road images')
     .sort({ createdAt: -1 })
 }
 
 // Static method to find user's bookings
 bookingSchema.statics.findByUser = function(userId) {
   return this.find({ userId })
-    .populate('propertyId', 'title price location images type')
+    .populate('propertyId', 'title price district thana area road images type')
     .sort({ createdAt: -1 })
 }
 

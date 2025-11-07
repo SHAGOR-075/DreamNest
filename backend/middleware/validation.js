@@ -72,10 +72,25 @@ export const validateProperty = [
     .isIn(['flat', 'land'])
     .withMessage('Type must be either flat or land'),
   
-  body('location')
+  body('district')
     .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Location must be between 5 and 200 characters'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('District must be between 2 and 100 characters'),
+  
+  body('thana')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Thana must be between 2 and 100 characters'),
+  
+  body('area')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Area must be between 2 and 100 characters'),
+  
+  body('road')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Road must be between 2 and 100 characters'),
   
   handleValidationErrors
 ]

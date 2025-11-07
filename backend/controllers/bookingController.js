@@ -48,7 +48,7 @@ export const createBooking = async (req, res) => {
 
     await booking.populate([
       { path: 'userId', select: 'name email phone' },
-      { path: 'propertyId', select: 'title price location images type' }
+      { path: 'propertyId', select: 'title price district thana area road images type' }
     ])
 
     res.status(201).json({

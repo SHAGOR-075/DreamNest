@@ -11,7 +11,10 @@ interface Property {
   description: string
   price: number
   type: 'flat' | 'land'
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
   images: string[]
   isAvailable: boolean
   isFeatured: boolean
@@ -24,11 +27,14 @@ interface PropertyForm {
   description: string
   price: number
   type: 'flat' | 'land'
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
   images: string
   features: string
   amenities: string
-  area?: number
+  propertyArea?: number
   bedrooms?: number
   bathrooms?: number
 }
@@ -70,7 +76,10 @@ const AdminProperties: React.FC = () => {
     setValue('description', property.description)
     setValue('price', property.price)
     setValue('type', property.type)
-    setValue('location', property.location)
+    setValue('district', property.district)
+    setValue('thana', property.thana)
+    setValue('area', property.area)
+    setValue('road', property.road)
     setValue('images', property.images.join(', '))
     setShowModal(true)
   }
@@ -143,11 +152,9 @@ const AdminProperties: React.FC = () => {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   if (loading) {
@@ -228,7 +235,7 @@ const AdminProperties: React.FC = () => {
                     <div className="flex items-center space-x-2 mb-2">
                       <i className="bi bi-geo-alt text-secondary-500"></i>
                       <span className="text-sm text-secondary-600 dark:text-secondary-400">
-                        {property.location}
+                        {property.district}, {property.thana}, {property.area}, {property.road}
                       </span>
                     </div>
 
@@ -357,7 +364,7 @@ const AdminProperties: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-                      Price ($)
+                      Price (TK)
                     </label>
                     <input
                       type="number"
@@ -390,21 +397,75 @@ const AdminProperties: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-                      Location
+                      District
                     </label>
                     <input
                       type="text"
-                      {...register('location', { 
-                        required: 'Location is required',
-                        minLength: { value: 5, message: 'Location must be at least 5 characters' }
+                      {...register('district', { 
+                        required: 'District is required',
+                        minLength: { value: 2, message: 'District must be at least 2 characters' }
                       })}
                       className="input-field"
-                      placeholder="Enter property location"
+                      placeholder="Enter district"
                     />
-                    {errors.location && (
-                      <p className="mt-1 text-sm text-error-500">{errors.location.message}</p>
+                    {errors.district && (
+                      <p className="mt-1 text-sm text-error-500">{errors.district.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                      Thana
+                    </label>
+                    <input
+                      type="text"
+                      {...register('thana', { 
+                        required: 'Thana is required',
+                        minLength: { value: 2, message: 'Thana must be at least 2 characters' }
+                      })}
+                      className="input-field"
+                      placeholder="Enter thana"
+                    />
+                    {errors.thana && (
+                      <p className="mt-1 text-sm text-error-500">{errors.thana.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                      Area
+                    </label>
+                    <input
+                      type="text"
+                      {...register('area', { 
+                        required: 'Area is required',
+                        minLength: { value: 2, message: 'Area must be at least 2 characters' }
+                      })}
+                      className="input-field"
+                      placeholder="Enter area"
+                    />
+                    {errors.area && (
+                      <p className="mt-1 text-sm text-error-500">{errors.area.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                      Road
+                    </label>
+                    <input
+                      type="text"
+                      {...register('road', { 
+                        required: 'Road is required',
+                        minLength: { value: 2, message: 'Road must be at least 2 characters' }
+                      })}
+                      className="input-field"
+                      placeholder="Enter road"
+                    />
+                    {errors.road && (
+                      <p className="mt-1 text-sm text-error-500">{errors.road.message}</p>
                     )}
                   </div>
 
@@ -464,13 +525,13 @@ const AdminProperties: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-                      Area (sq ft)
+                      Property Area (sq ft)
                     </label>
                     <input
                       type="number"
-                      {...register('area')}
+                      {...register('propertyArea')}
                       className="input-field"
-                      placeholder="Enter area"
+                      placeholder="Enter property area"
                     />
                   </div>
 

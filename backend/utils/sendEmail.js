@@ -53,8 +53,8 @@ export const sendBookingNotification = async (booking) => {
       <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="margin-top: 0;">Property Details</h3>
         <p><strong>Title:</strong> ${booking.propertyId.title}</p>
-        <p><strong>Location:</strong> ${booking.propertyId.location}</p>
-        <p><strong>Price:</strong> $${booking.propertyId.price.toLocaleString()}</p>
+        <p><strong>Location:</strong> ${booking.propertyId.district}, ${booking.propertyId.thana}, ${booking.propertyId.area}, ${booking.propertyId.road}</p>
+        <p><strong>Price:</strong> TK ${booking.propertyId.price.toLocaleString()}</p>
       </div>
       
       <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -96,7 +96,7 @@ export const sendBookingStatusUpdate = async (booking) => {
       <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="margin-top: 0;">Your booking has been ${booking.status.toLowerCase()}</h3>
         <p><strong>Property:</strong> ${booking.propertyId.title}</p>
-        <p><strong>Location:</strong> ${booking.propertyId.location}</p>
+        <p><strong>Location:</strong> ${booking.propertyId.district}, ${booking.propertyId.thana}, ${booking.propertyId.area}, ${booking.propertyId.road}</p>
         <p><strong>Status:</strong> <span style="color: ${booking.status === 'Approved' ? '#22c55e' : '#ef4444'}">${booking.status}</span></p>
       </div>
       

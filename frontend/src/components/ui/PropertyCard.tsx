@@ -8,7 +8,10 @@ interface Property {
   description: string
   price: number
   type: 'flat' | 'land'
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
   images: string[]
   createdAt: string
 }
@@ -20,11 +23,9 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, index = 0 }) => {
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   return (
@@ -63,7 +64,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, index = 0 }) => {
         <div className="flex items-center space-x-2 mb-2">
           <i className="bi bi-geo-alt text-secondary-500"></i>
           <span className="text-sm text-secondary-600 dark:text-secondary-400">
-            {property.location}
+            {property.district}, {property.thana}, {property.area}, {property.road}
           </span>
         </div>
 

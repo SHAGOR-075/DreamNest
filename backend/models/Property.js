@@ -19,7 +19,7 @@ const propertySchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Property price is required'],
     min: [0, 'Price cannot be negative'],
-    max: [100000000, 'Price cannot exceed $100,000,000']
+    max: [100000000, 'Price cannot exceed TK 100,000,000']
   },
   type: {
     type: String,
@@ -29,12 +29,33 @@ const propertySchema = new mongoose.Schema({
       message: 'Property type must be either flat or land'
     }
   },
-  location: {
+  district: {
     type: String,
-    required: [true, 'Property location is required'],
+    required: [true, 'District is required'],
     trim: true,
-    minlength: [5, 'Location must be at least 5 characters long'],
-    maxlength: [200, 'Location cannot exceed 200 characters']
+    minlength: [2, 'District must be at least 2 characters long'],
+    maxlength: [100, 'District cannot exceed 100 characters']
+  },
+  thana: {
+    type: String,
+    required: [true, 'Thana is required'],
+    trim: true,
+    minlength: [2, 'Thana must be at least 2 characters long'],
+    maxlength: [100, 'Thana cannot exceed 100 characters']
+  },
+  area: {
+    type: String,
+    required: [true, 'Area is required'],
+    trim: true,
+    minlength: [2, 'Area must be at least 2 characters long'],
+    maxlength: [100, 'Area cannot exceed 100 characters']
+  },
+  road: {
+    type: String,
+    required: [true, 'Road is required'],
+    trim: true,
+    minlength: [2, 'Road must be at least 2 characters long'],
+    maxlength: [100, 'Road cannot exceed 100 characters']
   },
   images: [{
     type: String,
@@ -56,9 +77,9 @@ const propertySchema = new mongoose.Schema({
     trim: true,
     maxlength: [50, 'Amenity cannot exceed 50 characters']
   }],
-  area: {
+  propertyArea: {
     type: Number,
-    min: [0, 'Area cannot be negative']
+    min: [0, 'Property area cannot be negative']
   },
   bedrooms: {
     type: Number,
@@ -104,11 +125,14 @@ const propertySchema = new mongoose.Schema({
 // Indexes for better query performance
 propertySchema.index({ type: 1 })
 propertySchema.index({ price: 1 })
-propertySchema.index({ location: 1 })
+propertySchema.index({ district: 1 })
+propertySchema.index({ thana: 1 })
+propertySchema.index({ area: 1 })
+propertySchema.index({ road: 1 })
 propertySchema.index({ isAvailable: 1 })
 propertySchema.index({ isFeatured: 1 })
 propertySchema.index({ createdAt: -1 })
-propertySchema.index({ title: 'text', description: 'text', location: 'text' })
+propertySchema.index({ title: 'text', description: 'text', district: 'text', thana: 'text', area: 'text', road: 'text' })
 
 // Update the updatedAt field before saving
 propertySchema.pre('save', function(next) {
@@ -118,11 +142,9 @@ propertySchema.pre('save', function(next) {
 
 // Virtual for formatted price
 propertySchema.virtual('formattedPrice').get(function() {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return `TK ${new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 0
-  }).format(this.price)
+  }).format(this.price)}`
 })
 
 // Virtual for property age

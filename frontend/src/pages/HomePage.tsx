@@ -12,7 +12,10 @@ interface Property {
   description: string
   price: number
   type: 'flat' | 'land'
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
   images: string[]
   createdAt: string
 }
@@ -22,7 +25,10 @@ interface SearchFilters {
   type: string
   minPrice: string
   maxPrice: string
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
 }
 
 const HomePage: React.FC = () => {
@@ -54,7 +60,10 @@ const HomePage: React.FC = () => {
         if (filters.type) params.append('type', filters.type)
         if (filters.minPrice) params.append('minPrice', filters.minPrice)
         if (filters.maxPrice) params.append('maxPrice', filters.maxPrice)
-        if (filters.location) params.append('location', filters.location)
+        if (filters.district) params.append('district', filters.district)
+        if (filters.thana) params.append('thana', filters.thana)
+        if (filters.area) params.append('area', filters.area)
+        if (filters.road) params.append('road', filters.road)
       }
 
       const response = await axios.get(`/api/properties?${params.toString()}`)

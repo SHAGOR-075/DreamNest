@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import axios from 'axios'
 
 interface SearchFiltersProps {
   onSearch: (filters: SearchFilters) => void
@@ -11,7 +12,17 @@ interface SearchFilters {
   type: string
   minPrice: string
   maxPrice: string
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
+}
+
+interface LocationValues {
+  districts: string[]
+  thanas: string[]
+  areas: string[]
+  roads: string[]
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, loading = false }) => {
@@ -20,8 +31,32 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, loading = false
     type: '',
     minPrice: '',
     maxPrice: '',
-    location: ''
+    district: '',
+    thana: '',
+    area: '',
+    road: ''
   })
+
+  const [locationValues, setLocationValues] = useState<LocationValues>({
+    districts: [],
+    thanas: [],
+    areas: [],
+    roads: []
+  })
+
+  useEffect(() => {
+    const fetchLocationValues = async () => {
+      try {
+        const response = await axios.get('/api/properties/locations')
+        if (response.data.success) {
+          setLocationValues(response.data.locations)
+        }
+      } catch (error) {
+        console.error('Error fetching location values:', error)
+      }
+    }
+    fetchLocationValues()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +69,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, loading = false
       type: '',
       minPrice: '',
       maxPrice: '',
-      location: ''
+      district: '',
+      thana: '',
+      area: '',
+      road: ''
     }
     setFilters(resetFilters)
     onSearch(resetFilters)
@@ -110,20 +148,78 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, loading = false
           </div>
         </div>
 
-        {/* Location */}
-        <div>
-          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-            Location
-          </label>
-          <div className="relative">
-            <i className="bi bi-geo-alt absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary-400"></i>
-            <input
-              type="text"
-              placeholder="Enter location..."
-              value={filters.location}
-              onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-              className="input-field pl-10"
-            />
+        {/* Location Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+              District
+            </label>
+            <select
+              value={filters.district}
+              onChange={(e) => setFilters({ ...filters, district: e.target.value })}
+              className="input-field"
+            >
+              <option value="">All Districts</option>
+              {locationValues.districts.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+              Thana
+            </label>
+            <select
+              value={filters.thana}
+              onChange={(e) => setFilters({ ...filters, thana: e.target.value })}
+              className="input-field"
+            >
+              <option value="">All Thanas</option>
+              {locationValues.thanas.map((thana) => (
+                <option key={thana} value={thana}>
+                  {thana}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+              Area
+            </label>
+            <select
+              value={filters.area}
+              onChange={(e) => setFilters({ ...filters, area: e.target.value })}
+              className="input-field"
+            >
+              <option value="">All Areas</option>
+              {locationValues.areas.map((area) => (
+                <option key={area} value={area}>
+                  {area}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+              Road
+            </label>
+            <select
+              value={filters.road}
+              onChange={(e) => setFilters({ ...filters, road: e.target.value })}
+              className="input-field"
+            >
+              <option value="">All Roads</option>
+              {locationValues.roads.map((road) => (
+                <option key={road} value={road}>
+                  {road}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

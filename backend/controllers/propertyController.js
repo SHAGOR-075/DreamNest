@@ -11,7 +11,10 @@ export const getProperties = async (req, res) => {
       type,
       minPrice,
       maxPrice,
-      location,
+      district,
+      thana,
+      area,
+      road,
       page = 1,
       limit = 12,
       sort = '-createdAt'
@@ -20,12 +23,15 @@ export const getProperties = async (req, res) => {
     // Build query
     let query = { isAvailable: true }
 
-    // Search in title, description, and location
+    // Search in title, description, and location fields
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } }
+        { district: { $regex: search, $options: 'i' } },
+        { thana: { $regex: search, $options: 'i' } },
+        { area: { $regex: search, $options: 'i' } },
+        { road: { $regex: search, $options: 'i' } }
       ]
     }
 
@@ -41,9 +47,18 @@ export const getProperties = async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice)
     }
 
-    // Filter by location
-    if (location) {
-      query.location = { $regex: location, $options: 'i' }
+    // Filter by location fields
+    if (district) {
+      query.district = { $regex: district, $options: 'i' }
+    }
+    if (thana) {
+      query.thana = { $regex: thana, $options: 'i' }
+    }
+    if (area) {
+      query.area = { $regex: area, $options: 'i' }
+    }
+    if (road) {
+      query.road = { $regex: road, $options: 'i' }
     }
 
     // Execute query with pagination
@@ -288,6 +303,38 @@ export const toggleFeaturedStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error updating featured status'
+    })
+  }
+}
+
+// @desc    Get unique location values
+// @route   GET /api/properties/locations
+// @access  Public
+export const getLocationValues = async (req, res) => {
+  try {
+    const properties = await Property.find({ isAvailable: true })
+      .select('district thana area road')
+      .lean()
+
+    const districts = [...new Set(properties.map(p => p.district).filter(Boolean))].sort()
+    const thanas = [...new Set(properties.map(p => p.thana).filter(Boolean))].sort()
+    const areas = [...new Set(properties.map(p => p.area).filter(Boolean))].sort()
+    const roads = [...new Set(properties.map(p => p.road).filter(Boolean))].sort()
+
+    res.json({
+      success: true,
+      locations: {
+        districts,
+        thanas,
+        areas,
+        roads
+      }
+    })
+  } catch (error) {
+    console.error('Get location values error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching location values'
     })
   }
 }

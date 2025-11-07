@@ -71,11 +71,9 @@ const AdminDashboard: React.FC = () => {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   if (loading) {

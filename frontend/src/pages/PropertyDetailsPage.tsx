@@ -12,7 +12,10 @@ interface Property {
   description: string
   price: number
   type: 'flat' | 'land'
-  location: string
+  district: string
+  thana: string
+  area: string
+  road: string
   images: string[]
   createdAt: string
 }
@@ -65,11 +68,9 @@ const PropertyDetailsPage: React.FC = () => {
   }
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return `TK ${new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
-    }).format(price)
+    }).format(price)}`
   }
 
   if (loading) {
@@ -199,7 +200,7 @@ const PropertyDetailsPage: React.FC = () => {
               <div className="flex items-center space-x-4 mb-6">
                 <div className="flex items-center space-x-2 text-secondary-600 dark:text-secondary-400">
                   <i className="bi bi-geo-alt"></i>
-                  <span>{property.location}</span>
+                  <span>{property.district}, {property.thana}, {property.area}, {property.road}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-secondary-600 dark:text-secondary-400">
                   <i className="bi bi-calendar"></i>

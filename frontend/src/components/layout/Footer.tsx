@@ -84,7 +84,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-secondary-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-secondary-400 text-sm">
-            © 2024 DreamNest. All rights reserved.
+            © 2025 DreamNest. All rights reserved.
           </p>
           <div className="flex items-center space-x-4 mt-4 md:mt-0">
             <a href="#" className="text-secondary-400 hover:text-primary-400 text-sm transition-colors duration-200">
@@ -94,7 +94,7 @@ const Footer: React.FC = () => {
               Terms of Service
             </a>
             <span className="text-secondary-500 text-sm">
-              Powered by <span className="text-primary-400 font-medium">Websparks AI</span>
+              Powered by <span className="text-primary-400 font-medium">DreamNest Team</span>
             </span>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 
 interface DashboardStats {
@@ -38,6 +39,7 @@ const AdminDashboard: React.FC = () => {
   })
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDashboardData()
@@ -45,15 +47,39 @@ const AdminDashboard: React.FC = () => {
 
   const fetchDashboardData = async () => {
     try {
+      setError(null)
+      setLoading(true)
       const [statsResponse, bookingsResponse] = await Promise.all([
         axios.get('/api/admin/stats'),
         axios.get('/api/admin/recent-bookings')
       ])
       
-      setStats(statsResponse.data)
-      setRecentBookings(bookingsResponse.data.bookings)
-    } catch (error) {
+      // Validate and set stats
+      if (statsResponse.data) {
+        setStats({
+          totalProperties: statsResponse.data.totalProperties || 0,
+          totalUsers: statsResponse.data.totalUsers || 0,
+          totalBookings: statsResponse.data.totalBookings || 0,
+          pendingBookings: statsResponse.data.pendingBookings || 0,
+          approvedBookings: statsResponse.data.approvedBookings || 0,
+          rejectedBookings: statsResponse.data.rejectedBookings || 0
+        })
+      }
+      
+      // Validate and set recent bookings
+      if (bookingsResponse.data && Array.isArray(bookingsResponse.data.bookings)) {
+        setRecentBookings(bookingsResponse.data.bookings)
+      } else {
+        setRecentBookings([])
+      }
+    } catch (error: any) {
       console.error('Error fetching dashboard data:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to load dashboard data. Please try again.'
+      setError(errorMessage)
+      // Don't show toast for 401 errors as the interceptor handles that
+      if (error.response?.status !== 401) {
+        toast.error(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
@@ -180,27 +206,50 @@ const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                {recentBookings.length > 0 ? (
-                  recentBookings.slice(0, 5).map((booking) => (
-                    <div key={booking._id} className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-secondary-800 rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-secondary-900 dark:text-secondary-100 truncate">
-                          {booking.propertyId.title}
-                        </p>
-                        <p className="text-xs text-secondary-600 dark:text-secondary-400">
-                          {booking.userId.name} • {formatPrice(booking.propertyId.price)}
-                        </p>
+                {error ? (
+                  <div className="text-center py-8">
+                    <i className="bi bi-exclamation-triangle text-4xl text-error-400 mb-2"></i>
+                    <p className="text-secondary-600 dark:text-secondary-400 mb-4">{error}</p>
+                    <button
+                      onClick={fetchDashboardData}
+                      className="btn-primary"
+                    >
+                      <i className="bi bi-arrow-clockwise mr-2"></i>
+                      Try Again
+                    </button>
+                  </div>
+                ) : recentBookings.length > 0 ? (
+                  recentBookings.slice(0, 5).map((booking) => {
+                    // Safety check: skip bookings with missing data
+                    if (!booking.propertyId || !booking.userId) {
+                      console.warn('Booking missing propertyId or userId:', booking._id)
+                      return null
+                    }
+
+                    const property = booking.propertyId
+                    const user = booking.userId
+
+                    return (
+                      <div key={booking._id} className="flex items-center justify-between p-4 bg-secondary-50 dark:bg-secondary-800 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-secondary-900 dark:text-secondary-100 truncate">
+                            {property.title || 'Untitled Property'}
+                          </p>
+                          <p className="text-xs text-secondary-600 dark:text-secondary-400">
+                            {user.name || 'Unknown User'} • {property.price ? formatPrice(property.price) : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
+                          <span className="text-xs text-secondary-500 dark:text-secondary-400">
+                            {new Date(booking.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                          {booking.status}
-                        </span>
-                        <span className="text-xs text-secondary-500 dark:text-secondary-400">
-                          {new Date(booking.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                    )
+                  }).filter(Boolean)
                 ) : (
                   <div className="text-center py-8">
                     <i className="bi bi-calendar-x text-4xl text-secondary-400 mb-2"></i>

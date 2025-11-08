@@ -35,6 +35,7 @@ interface Booking {
 const AdminBookings: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('')
@@ -47,14 +48,28 @@ const AdminBookings: React.FC = () => {
 
   const fetchBookings = async () => {
     try {
+      setError(null)
+      setLoading(true)
       const params = new URLSearchParams()
       if (statusFilter) params.append('status', statusFilter)
       
       const response = await axios.get(`/api/bookings?${params.toString()}`)
-      setBookings(response.data.bookings)
-    } catch (error) {
+      
+      // Validate response structure
+      if (response.data && Array.isArray(response.data.bookings)) {
+        setBookings(response.data.bookings)
+      } else {
+        setBookings([])
+      }
+    } catch (error: any) {
       console.error('Error fetching bookings:', error)
-      toast.error('Failed to fetch bookings')
+      const errorMessage = error.response?.data?.message || 'Failed to fetch bookings. Please try again.'
+      setError(errorMessage)
+      setBookings([])
+      // Don't show toast for 401 errors as the interceptor handles that
+      if (error.response?.status !== 401) {
+        toast.error(errorMessage)
+      }
     } finally {
       setLoading(false)
     }
@@ -143,74 +158,127 @@ const AdminBookings: React.FC = () => {
           </div>
 
           {/* Bookings List */}
-          {bookings.length > 0 ? (
+          {error ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-12"
+            >
+              <div className="w-24 h-24 bg-error-100 dark:bg-error-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="bi bi-exclamation-triangle text-4xl text-error-600 dark:text-error-400"></i>
+              </div>
+              <h3 className="text-2xl font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
+                Error Loading Bookings
+              </h3>
+              <p className="text-secondary-600 dark:text-secondary-400 mb-8 max-w-md mx-auto">
+                {error}
+              </p>
+              <button
+                onClick={fetchBookings}
+                className="btn-primary"
+              >
+                <i className="bi bi-arrow-clockwise mr-2"></i>
+                Try Again
+              </button>
+            </motion.div>
+          ) : bookings.length > 0 ? (
             <div className="space-y-6">
-              {bookings.map((booking, index) => (
-                <motion.div
-                  key={booking._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="card p-6"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 flex-1">
-                      {/* Property Image */}
-                      <div className="flex-shrink-0">
-                        <img
-                          src={booking.propertyId.images[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'}
-                          alt={booking.propertyId.title}
-                          crossOrigin="anonymous"
-                          className="w-full sm:w-32 h-32 object-cover rounded-xl"
-                        />
-                      </div>
+              {bookings.map((booking, index) => {
+                // Safety check: skip bookings with missing data
+                if (!booking.propertyId || !booking.userId) {
+                  console.warn('Booking missing propertyId or userId:', booking._id)
+                  return null
+                }
 
-                      {/* Booking Details */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
-                              {booking.propertyId.title}
-                            </h3>
-                            <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                              by {booking.userId.name}
-                            </p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
-                            {booking.status}
-                          </span>
+                const property = booking.propertyId
+                const user = booking.userId
+                const propertyImage = property.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'
+                const location = property.location || {}
+                const addressParts = [
+                  property.district || location.district,
+                  property.thana || location.thana,
+                  property.area || location.area,
+                  property.road || location.road
+                ].filter(Boolean)
+
+                return (
+                  <motion.div
+                    key={booking._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    className="card p-6"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 flex-1">
+                        {/* Property Image */}
+                        <div className="flex-shrink-0">
+                          <img
+                            src={propertyImage}
+                            alt={property.title || 'Property'}
+                            crossOrigin="anonymous"
+                            className="w-full sm:w-32 h-32 object-cover rounded-xl"
+                          />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-geo-alt"></i>
-                              <span>{booking.propertyId.district}, {booking.propertyId.thana}, {booking.propertyId.area}, {booking.propertyId.road}</span>
+                        {/* Booking Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h3 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
+                                {property.title || 'Untitled Property'}
+                              </h3>
+                              <p className="text-sm text-secondary-600 dark:text-secondary-400">
+                                by {user.name || 'Unknown User'}
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-tag"></i>
-                              <span>{booking.propertyId.type === 'flat' ? 'Apartment' : 'Land'}</span>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
+                              {booking.status}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div className="space-y-2">
+                              {addressParts.length > 0 && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-geo-alt"></i>
+                                  <span>{addressParts.join(', ')}</span>
+                                </div>
+                              )}
+                              {property.type && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-tag"></i>
+                                  <span>{property.type === 'flat' ? 'Apartment' : 'Land'}</span>
+                                </div>
+                              )}
+                              {property.price && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-wallet2"></i>
+                                  <span>{formatPrice(property.price)}</span>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-wallet2"></i>
-                              <span>{formatPrice(booking.propertyId.price)}</span>
+                            <div className="space-y-2">
+                              {user.email && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-person"></i>
+                                  <span>{user.email}</span>
+                                </div>
+                              )}
+                              {user.phone && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-telephone"></i>
+                                  <span>{user.phone}</span>
+                                </div>
+                              )}
+                              {booking.age && (
+                                <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
+                                  <i className="bi bi-clock"></i>
+                                  <span>{booking.age}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-person"></i>
-                              <span>{booking.userId.email}</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-telephone"></i>
-                              <span>{booking.userId.phone}</span>
-                            </div>
-                            <div className="flex items-center space-x-2 text-sm text-secondary-600 dark:text-secondary-400">
-                              <i className="bi bi-clock"></i>
-                              <span>{booking.age}</span>
-                            </div>
-                          </div>
-                        </div>
 
                         {booking.message && (
                           <div className="mb-4 p-3 bg-secondary-50 dark:bg-secondary-800 rounded-lg">
@@ -228,19 +296,22 @@ const AdminBookings: React.FC = () => {
                             <i className="bi bi-eye mr-2"></i>
                             View Details
                           </button>
-                          <Link
-                            to={`/property/${booking.propertyId._id}`}
-                            className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-secondary-700 dark:text-secondary-300 text-sm font-medium rounded-lg transition-colors duration-200"
-                          >
-                            <i className="bi bi-house mr-2"></i>
-                            View Property
-                          </Link>
+                          {property._id && (
+                            <Link
+                              to={`/property/${property._id}`}
+                              className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-secondary-700 dark:text-secondary-300 text-sm font-medium rounded-lg transition-colors duration-200"
+                            >
+                              <i className="bi bi-house mr-2"></i>
+                              View Property
+                            </Link>
+                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                 </motion.div>
-              ))}
+                )
+              }).filter(Boolean)}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -281,58 +352,77 @@ const AdminBookings: React.FC = () => {
 
               <div className="space-y-6">
                 {/* Property Info */}
-                <div className="flex space-x-4">
-                  <img
-                    src={selectedBooking.propertyId.images[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'}
-                    alt={selectedBooking.propertyId.title}
-                    crossOrigin="anonymous"
-                    className="w-24 h-24 object-cover rounded-xl"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
-                      {selectedBooking.propertyId.title}
-                    </h3>
-                    <p className="text-secondary-600 dark:text-secondary-400">
-                      {selectedBooking.propertyId.district}, {selectedBooking.propertyId.thana}, {selectedBooking.propertyId.area}, {selectedBooking.propertyId.road}
-                    </p>
-                    <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                      {formatPrice(selectedBooking.propertyId.price)}
-                    </p>
+                {selectedBooking.propertyId && (
+                  <div className="flex space-x-4">
+                    <img
+                      src={selectedBooking.propertyId.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80'}
+                      alt={selectedBooking.propertyId.title || 'Property'}
+                      crossOrigin="anonymous"
+                      className="w-24 h-24 object-cover rounded-xl"
+                    />
+                    <div>
+                      <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
+                        {selectedBooking.propertyId.title || 'Untitled Property'}
+                      </h3>
+                      {(selectedBooking.propertyId.district || selectedBooking.propertyId.location) && (
+                        <p className="text-secondary-600 dark:text-secondary-400">
+                          {[
+                            selectedBooking.propertyId.district || selectedBooking.propertyId.location?.district,
+                            selectedBooking.propertyId.thana || selectedBooking.propertyId.location?.thana,
+                            selectedBooking.propertyId.area || selectedBooking.propertyId.location?.area,
+                            selectedBooking.propertyId.road || selectedBooking.propertyId.location?.road
+                          ].filter(Boolean).join(', ')}
+                        </p>
+                      )}
+                      {selectedBooking.propertyId.price && (
+                        <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                          {formatPrice(selectedBooking.propertyId.price)}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Customer Info */}
-                <div className="card p-4">
-                  <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-3">
-                    Customer Information
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-secondary-600 dark:text-secondary-400">Name</p>
-                      <p className="font-medium text-secondary-900 dark:text-secondary-100">
-                        {selectedBooking.userId.name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-secondary-600 dark:text-secondary-400">Email</p>
-                      <p className="font-medium text-secondary-900 dark:text-secondary-100">
-                        {selectedBooking.userId.email}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-secondary-600 dark:text-secondary-400">Phone</p>
-                      <p className="font-medium text-secondary-900 dark:text-secondary-100">
-                        {selectedBooking.userId.phone}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-secondary-600 dark:text-secondary-400">Status</p>
-                      <span className={`inline-block px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedBooking.status)}`}>
-                        {selectedBooking.status}
-                      </span>
+                {selectedBooking.userId && (
+                  <div className="card p-4">
+                    <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-3">
+                      Customer Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedBooking.userId.name && (
+                        <div>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400">Name</p>
+                          <p className="font-medium text-secondary-900 dark:text-secondary-100">
+                            {selectedBooking.userId.name}
+                          </p>
+                        </div>
+                      )}
+                      {selectedBooking.userId.email && (
+                        <div>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400">Email</p>
+                          <p className="font-medium text-secondary-900 dark:text-secondary-100">
+                            {selectedBooking.userId.email}
+                          </p>
+                        </div>
+                      )}
+                      {selectedBooking.userId.phone && (
+                        <div>
+                          <p className="text-sm text-secondary-600 dark:text-secondary-400">Phone</p>
+                          <p className="font-medium text-secondary-900 dark:text-secondary-100">
+                            {selectedBooking.userId.phone}
+                          </p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm text-secondary-600 dark:text-secondary-400">Status</p>
+                        <span className={`inline-block px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedBooking.status)}`}>
+                          {selectedBooking.status}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {/* Customer Message */}
                 {selectedBooking.message && (

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import toast from 'react-hot-toast'
@@ -45,33 +45,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Define logout function using useCallback so it's stable
+  const logout = useCallback(() => {
+    Cookies.remove('token')
+    setUser(null)
+    toast.success('Logged out successfully')
+  }, [])
+
   // Configure axios defaults
-  axios.defaults.baseURL = 'http://localhost:5000'
-  axios.defaults.withCredentials = true
+  useEffect(() => {
+    axios.defaults.baseURL = 'http://localhost:5000'
+    axios.defaults.withCredentials = true
 
-  // Add request interceptor to include token
-  axios.interceptors.request.use(
-    (config) => {
-      const token = Cookies.get('token')
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    },
-    (error) => Promise.reject(error)
-  )
+    // Add request interceptor to include token
+    const requestInterceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = Cookies.get('token')
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`
+        }
+        return config
+      },
+      (error) => Promise.reject(error)
+    )
 
-  // Add response interceptor to handle token expiration
-  axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        logout()
-        toast.error('Session expired. Please login again.')
+    // Add response interceptor to handle token expiration
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // Only log out on 401 errors that are authentication-related
+        // Skip logout for login/register endpoints to avoid infinite loops
+        if (error.response?.status === 401) {
+          const url = error.config?.url || ''
+          const errorMessage = error.response?.data?.message || ''
+          
+          // Don't log out on auth endpoints (login, register, profile check)
+          if (!url.includes('/api/users/login') && 
+              !url.includes('/api/users/register') &&
+              !url.includes('/api/users/profile')) {
+            // Only log out if we have a token (meaning we were authenticated)
+            // and the error is authentication-related
+            const token = Cookies.get('token')
+            if (token && (
+              errorMessage.toLowerCase().includes('token') || 
+              errorMessage.toLowerCase().includes('access denied') || 
+              errorMessage.toLowerCase().includes('unauthorized') ||
+              errorMessage.toLowerCase().includes('authentication') ||
+              errorMessage.toLowerCase().includes('invalid token') ||
+              errorMessage.toLowerCase().includes('token expired') ||
+              errorMessage.toLowerCase().includes('no token provided')
+            )) {
+              logout()
+              toast.error('Session expired. Please login again.')
+            }
+          }
+        }
+        return Promise.reject(error)
       }
-      return Promise.reject(error)
+    )
+
+    // Cleanup interceptors on unmount
+    return () => {
+      axios.interceptors.request.eject(requestInterceptor)
+      axios.interceptors.response.eject(responseInterceptor)
     }
-  )
+  }, [logout])
 
   const checkAuth = async () => {
     try {
@@ -123,12 +161,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.error(message)
       throw error
     }
-  }
-
-  const logout = () => {
-    Cookies.remove('token')
-    setUser(null)
-    toast.success('Logged out successfully')
   }
 
   const updateProfile = async (userData: Partial<User>) => {

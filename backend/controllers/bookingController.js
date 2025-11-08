@@ -111,7 +111,7 @@ export const getAllBookings = async (req, res) => {
 
     const bookings = await Booking.find(query)
       .populate('userId', 'name email phone')
-      .populate('propertyId', 'title price location images type')
+      .populate('propertyId', 'title price district thana area road images type')
       .populate('respondedBy', 'name email')
       .sort(sort)
       .skip(skip)

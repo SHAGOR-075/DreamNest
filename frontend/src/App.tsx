@@ -12,6 +12,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/auth/LoginPage'
 import RegisterPage from './pages/auth/RegisterPage'
+import VerifyEmailPage from './pages/auth/VerifyEmailPage'
 import PropertyDetailsPage from './pages/PropertyDetailsPage'
 
 // Protected User Pages
@@ -55,6 +56,10 @@ function App() {
             <Route 
               path="/register" 
               element={user ? <Navigate to="/" replace /> : <RegisterPage />} 
+            />
+            <Route 
+              path="/verify-email" 
+              element={user ? <Navigate to="/" replace /> : <VerifyEmailPage />} 
             />
             
             {/* Protected User Routes */}

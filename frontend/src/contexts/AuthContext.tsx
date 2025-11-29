@@ -11,11 +11,18 @@ interface User {
   role: 'user' | 'admin'
 }
 
+interface LoginResult {
+  otpRequired?: boolean
+  message?: string
+}
+
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<LoginResult>
+  verifyLoginOtp: (email: string, otp: string) => Promise<void>
   register: (userData: RegisterData) => Promise<void>
+  verifyEmail: (email: string, otp: string) => Promise<void>
   logout: () => void
   updateProfile: (userData: Partial<User>) => Promise<void>
 }
@@ -119,7 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return
       }
 
-      const response = await axios.get('/api/users/profile')
+      const response = await axios.get('/api/users/profile', { withCredentials: true })
       setUser(response.data.user)
     } catch (error) {
       console.error('Auth check failed:', error)
@@ -133,16 +140,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const response = await axios.post('/api/users/login', { email, password })
-      const { user, token } = response.data
-      
-      Cookies.set('token', token, { expires: 7 })
-      setUser(user)
-      toast.success(`Welcome back, ${user.name}!`)
+      const { user, token, otpRequired, message } = response.data
+
+      // In case backend ever returns direct token (no 2FA)
+      if (user && token && !otpRequired) {
+        Cookies.set('token', token, { expires: 7 })
+        setUser(user)
+        toast.success(message || `Welcome back, ${user.name}!`)
+        return { message }
+      }
+
+      // 2FA required: OTP sent to email
+      if (otpRequired) {
+        toast.success(message || 'We sent a login verification code to your email.')
+        return { otpRequired: true, message }
+      }
+
+      // Fallback
+      return { message }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed'
+      toast.error(message)
+      throw error
+    }
+  }
+
+  const verifyLoginOtp = async (email: string, otp: string) => {
+    try {
+      const response = await axios.post('/api/users/login/verify-otp', { email, otp })
+      const { user, token, message } = response.data
+
+      Cookies.set('token', token, { expires: 7 })
+      setUser(user)
+      toast.success(message || `Welcome back, ${user.name}!`)
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Login verification failed'
       toast.error(message)
       throw error
     }
@@ -158,6 +193,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.success(`Welcome to DreamNest, ${user.name}!`)
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed'
+      toast.error(message)
+      throw error
+    }
+  }
+
+  const verifyEmail = async (email: string, otp: string) => {
+    try {
+      const response = await axios.post('/api/users/verify-email', { email, otp })
+      const { user, token, message } = response.data
+
+      if (token && user) {
+        Cookies.set('token', token, { expires: 7 })
+        setUser(user)
+      }
+
+      toast.success(message || 'Email verified successfully')
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Email verification failed'
       toast.error(message)
       throw error
     }
@@ -179,7 +232,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     login,
+    verifyLoginOtp,
     register,
+    verifyEmail,
     logout,
     updateProfile
   }

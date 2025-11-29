@@ -51,6 +51,22 @@ export const validateUserLogin = [
   handleValidationErrors
 ]
 
+// Email + OTP validation (for login 2FA, can also be reused)
+export const validateEmailOtp = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address'),
+
+  body('otp')
+    .isLength({ min: 4, max: 6 })
+    .withMessage('OTP must be between 4 and 6 digits')
+    .matches(/^[0-9]+$/)
+    .withMessage('OTP must contain only numbers'),
+
+  handleValidationErrors
+]
+
 // Property validation
 export const validateProperty = [
   body('title')

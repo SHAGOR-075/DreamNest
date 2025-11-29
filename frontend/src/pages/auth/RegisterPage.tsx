@@ -29,7 +29,7 @@ const RegisterPage: React.FC = () => {
         phone: data.phone,
         password: data.password
       })
-      navigate('/')
+      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`)
     } catch (error) {
       console.error('Registration error:', error)
     } finally {

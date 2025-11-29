@@ -1,8 +1,13 @@
+import dotenv from 'dotenv'
+
+// Load environment variables from .env file (if present)
+dotenv.config()
+
 export const config = {
   PORT: process.env.PORT || 5000,
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb+srv://DreamNest:DreamNest2025@dreamnest.spbj9ol.mongodb.net/?appName=DreamNest',
-  JWT_SECRET: process.env.JWT_SECRET || '1c41efd916397db3d1d302413e446d7cf2960cacf7fe706e686ddb65ecd0b9c2',
-  JWT_EXPIRE: process.env.JWT_EXPIRE || '7d',
+  JWT_SECRET: process.env.JWT_SECRET || '061c3ce451bc7762f794fc766251819074bdc2e5b58e6e7bd7536dcd9ac744a3',
+  JWT_EXPIRE: process.env.JWT_EXPIRE || '30d',
   NODE_ENV: process.env.NODE_ENV || 'development',
   
   // Email Configuration (Optional)
